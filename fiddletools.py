@@ -4,7 +4,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Mapping, Iterable
 
-with open("settings.json") as fp:
+with open(Path(__file__).parent / "settings.json") as fp:
     SETTINGS = json.load(fp)
 
 class FiddleParser(Mapping):
