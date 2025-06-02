@@ -15,7 +15,8 @@ class FiddleParser(Mapping):
             path:str = SETTINGS["parser_settings"]["game_path"],
             filename:str = "__fiddle__", 
             is_open:bool = SETTINGS["parser_settings"]["is_open"],
-            dark_mode:bool = SETTINGS["parser_settings"]["dark_mode"]
+            dark_mode:bool = SETTINGS["parser_settings"]["dark_mode"],
+            custom_filter:callable = None
     ):  
         """FiddleParser for Fields of Mistria game data. 
         Parses the `__fiddle__` file by default but can be used for other game JSONs.
@@ -27,6 +28,7 @@ class FiddleParser(Mapping):
             filename (str, Optional): Name of the file to be used. 
                 A path to the file is also permitted but not recommended Defaults to `"__fiddle__"`.
             is_open (bool, Optional): Whether to open the list elements in the HTML output or not. Defaults to what's written in the settings file.
+            custom_filter (callable, Optional): Custom key filter function. All keys in the dictionary for which this function returns False will be ignored. Defaults to `lambda key : "/" not in key`.
         
         """
         self.is_open = " open" if is_open else ""
@@ -42,7 +44,9 @@ class FiddleParser(Mapping):
             self.data = data
         # we remove duplicate keys because the fiddle has a lot of redundancy... 
         # this is why make_details separates fsub and keys arguments
-        self.data_keys = [key for key in self.data if "/" not in key]
+        if custom_filter is None:
+            custom_filter = lambda key : "/" not in key
+        self.data_keys = [key for key in self.data if custom_filter(key)]
 
     def make_list(self, bullet:Iterable) -> str:
         """Makes an HTML list object out of the elements in the given `bullet` list.
