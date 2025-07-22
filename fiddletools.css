@@ -31,3 +31,12 @@ ul {
 div {
     padding-left: 30px;
 }
+
+#displaymode {
+    position: absolute;
+    margin-left: 90%;
+    background-color:hsl(222, 32%, 15%);
+    color:hsl(205, 65%, 90%);
+    border-radius: 10%;
+    height:40px
+}
