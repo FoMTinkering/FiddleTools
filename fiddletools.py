@@ -4,8 +4,45 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Mapping, Iterable
 
-with open(Path(__file__).parent / "settings.json") as fp:
+with open("settings.json") as fp:
     SETTINGS = json.load(fp)
+
+def serialize_data(data: dict):
+    """Turns a dict of the form
+    ```
+    {
+    "A/B/C":"E",
+    "A/B/D": "F",
+    "G/H": "J",
+    "G/I": "K"
+    }
+    ```
+    into a dict of the form
+    ```
+    {
+        "A": 
+            {
+                "B": {"C": "E", "D": "F"}
+            }, 
+        "G": {"H": "J", "I": "K"}
+    }
+    ```
+    
+    """
+    new_dict = {}
+    for key, val in data.items():
+        d = new_dict
+        while "/" in key:
+            k = key[:key.find("/")]
+            key = key[key.find("/")+1:]
+            if k not in d:
+                d[k] = {}
+                d = d[k]
+            else:
+                if isinstance(d[k], dict):
+                    d = d[k]
+        d[key] = val
+    return new_dict
 
 class FiddleParser(Mapping):
     def __init__(
@@ -16,7 +53,8 @@ class FiddleParser(Mapping):
             filename:str = "__fiddle__", 
             is_open:bool = SETTINGS["parser_settings"]["is_open"],
             dark_mode:bool = SETTINGS["parser_settings"]["dark_mode"],
-            custom_filter:callable = None
+            filter:str = SETTINGS["parser_settings"]["filter"],
+            serialize: bool = SETTINGS["parser_settings"]["serialize"]
     ):  
         """FiddleParser for Fields of Mistria game data. 
         Parses the `__fiddle__` file by default but can be used for other game JSONs.
@@ -28,7 +66,6 @@ class FiddleParser(Mapping):
             filename (str, Optional): Name of the file to be used. 
                 A path to the file is also permitted but not recommended Defaults to `"__fiddle__"`.
             is_open (bool, Optional): Whether to open the list elements in the HTML output or not. Defaults to what's written in the settings file.
-            custom_filter (callable, Optional): Custom key filter function. All keys in the dictionary for which this function returns False will be ignored. Defaults to `lambda key : "/" not in key`.
         
         """
         self.is_open = " open" if is_open else ""
@@ -42,11 +79,19 @@ class FiddleParser(Mapping):
                 self.data = json.load(fp)
         else:
             self.data = data
+        if serialize:
+            self.data = serialize_data(self.data)
+        self.serialize = serialize
         # we remove duplicate keys because the fiddle has a lot of redundancy... 
         # this is why make_details separates fsub and keys arguments
-        if custom_filter is None:
-            custom_filter = lambda key : "/" not in key
-        self.data_keys = [key for key in self.data if custom_filter(key)]
+        f = filter
+        match filter:
+            case "slashes":
+                f = lambda key : "/" not in key
+            case "none":
+                f = lambda key : True
+        self.data_keys = [key for key in self.data if f(key)]
+        
 
     def make_list(self, bullet:Iterable) -> str:
         """Makes an HTML list object out of the elements in the given `bullet` list.
@@ -61,6 +106,8 @@ class FiddleParser(Mapping):
         for el in bullet:
             s += "<li>"
             if isinstance(el, dict):
+                if self.serialize:
+                    el = serialize_data(el)
                 s += self.make_details(el, list(el.keys()))
             elif isinstance(el, list):
                 s += self.make_list(el)
@@ -87,6 +134,8 @@ class FiddleParser(Mapping):
             s += f"<details{self.is_open}><summary>{key}</summary>"
             bullet = fsub[key]
             if isinstance(bullet, dict):
+                if self.serialize:
+                    bullet = serialize_data(bullet)
                 details = self.make_details(bullet, list(bullet.keys()))
             elif isinstance(bullet, list):
                 details = self.make_list(bullet)
@@ -106,7 +155,7 @@ class FiddleParser(Mapping):
         self.html = f"""<head>
             <link rel="stylesheet" href="{self.css}.css">
         </head>
-        <body>""" + self.make_details(self.data, self.data_keys).encode("utf8").decode() + "</body>"
+        <body>""" + (self.make_details(self.data, self.data_keys).encode("utf8").decode() if isinstance(self.data, dict) else self.make_list(self.data).encode("utf8").decode()) + "</body>"
 
         with open(Path(output_folder)/f"{self.filename.name[:-5]}.html", "w", encoding="utf-8") as fp:
             fp.write(self.html)
@@ -137,6 +186,9 @@ class FiddleComparator(Mapping):
     path2:str = SETTINGS["comparator_settings"]["v2"]["path"]
     v2:str = SETTINGS["comparator_settings"]["v2"]["version"]
     output_folder:str = SETTINGS["comparator_settings"]["output_folder"]
+    filter:str = SETTINGS["comparator_settings"]["filter"]
+    name:str = ""
+    serialize: bool = SETTINGS["comparator_settings"]["serialize"]
 
     def find_differences(self, d1:dict, d2:dict):
         """Finds all differences between two dict objects.
@@ -175,7 +227,7 @@ class FiddleComparator(Mapping):
 
     @property
     def filename(self):
-        return f"compare_{self.v1}-{self.v2}"
+        return f"compare-{self.name}-_{self.v1}-{self.v2}"
     
     def to_html(self):
         """Exports the FiddleComparator object into a readable HTML file.
@@ -183,7 +235,9 @@ class FiddleComparator(Mapping):
         """
         FiddleParser(
             data=self.data, 
-            filename=self.filename
+            filename=self.filename,
+            filter=self.filter,
+            serialize=self.serialize
         ).to_html(output_folder=self.output_folder)
 
     def to_json(self):
