@@ -29,7 +29,3 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.12",
 ]
-
-[project.scripts]
-"backpropagate" = "backpropagation:backpropagate"
-"clean-csv" = "backpropagation:clean_csv"
