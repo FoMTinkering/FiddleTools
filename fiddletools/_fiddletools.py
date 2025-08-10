@@ -4,7 +4,9 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Mapping, Iterable
 
-with open("settings.json") as fp:
+local = Path(__file__).parent
+
+with open(Path(local)/"settings.json") as fp:
     SETTINGS = json.load(fp)
 
 def serialize_data(data: dict):
@@ -152,7 +154,7 @@ class FiddleParser(Mapping):
         Args:
             output_folder (str, Optional): Folder in which the file will be saved. Defaults to `""`, which save to the local path.
         """
-        with open(f"{self.css}.css") as fp:
+        with open(Path(local)/f"{self.css}.css") as fp:
             css = fp.read()
         self.html = f"""<head>
             <style>{css}</style>
