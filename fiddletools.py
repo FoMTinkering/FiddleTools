@@ -152,8 +152,10 @@ class FiddleParser(Mapping):
         Args:
             output_folder (str, Optional): Folder in which the file will be saved. Defaults to `""`, which save to the local path.
         """
+        with open(f"{self.css}.css") as fp:
+            css = fp.read()
         self.html = f"""<head>
-            <link rel="stylesheet" href="{self.css}.css">
+            <style>{css}</style>
         </head>
         <body>""" + (self.make_details(self.data, self.data_keys).encode("utf8").decode() if isinstance(self.data, dict) else self.make_list(self.data).encode("utf8").decode()) + "</body>"
 

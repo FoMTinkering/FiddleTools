@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = [""]
+
+[project]
+authors = [
+    { name = "Christopher Mazzerbo", email = "christopher.mazzerbo@gmail.com"},
+]
+maintainers = [
+    {name = "Christopher Mazzerbo", email = "christopher.mazzerbo@gmail.com"}
+]
+name = "fiddletools"
+description = "Makes editing Fields of Mistria's __fiddle__.json file easier."
+version = "0.1.0"
+license = { file = "LICENSE" }
+readme = {file = "README.txt", content-type = "text/markdown"}
+requires-python = ">= 3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+"backpropagate" = "backpropagation:backpropagate"
+"clean-csv" = "backpropagation:clean_csv"

@@ -3,7 +3,9 @@
         "game_path":"C:/Program Files (x86)/Steam/steamapps/common/Fields of Mistria",
         "custom_path":"",
         "is_open": false,
-        "dark_mode": false
+        "dark_mode": false,
+        "filter":"slashes",
+        "serialize":false
     },    
     "comparator_settings":{
         "v1":{
@@ -16,6 +18,8 @@
         },
         "output_folder":"",
         "dump_json": false,
-        "dump_html": true
+        "dump_html": true,
+        "filter":"slashes",
+        "serialize":false
     }
 }
